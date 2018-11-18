@@ -2,6 +2,7 @@ package phasetwo;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -52,12 +53,13 @@ public class PhaseTwo {
         }
     }
 
-    public static class Reduce extends Reducer<Text, Text, Text, Text> {
-        List<String> neighborList = new ArrayList<>();
+    public static class Reduce extends Reducer<Text, Text, Text, IntWritable> {
         Text three_node = new Text();
+        IntWritable one = new IntWritable(1);
 
         @Override
         protected void reduce(Text user, Iterable<Text> neighbors, Context context) throws IOException, InterruptedException {
+            List<String> neighborList = new ArrayList<>();
             boolean contain_dollar = false;
 
             for (Text neighbor : neighbors) {
@@ -72,11 +74,10 @@ public class PhaseTwo {
                 for (String neighbor : neighborList) {
                     if (!neighbor.equals("$")) {
                         three_node.set(user.toString() + ',' + neighbor);
+                        context.write(three_node, one);
                     }
                 }
             }
-
-            neighborList.clear();
         }
     }
 }

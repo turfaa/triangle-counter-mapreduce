@@ -21,13 +21,12 @@ public class Preprocessor {
         BasicConfigurator.configure();
 
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "plis cepet");
+        Job job = Job.getInstance(conf, "preps");
 
         job.setJarByClass(Preprocessor.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         job.setMapperClass(Map.class);
-        job.setCombinerClass(Reduce.class);
         job.setReducerClass(Reduce.class);
         job.setInputFormatClass(KeyValueTextInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
@@ -41,23 +40,30 @@ public class Preprocessor {
     public static class Map extends Mapper<Text, Text, Text, Text> {
         @Override
         protected void map(Text user, Text follower, Context context) throws IOException, InterruptedException {
-            context.write(user, follower);
-            context.write(follower, user);
+            String user_string = user.toString();
+            String follower_string = follower.toString();
+
+            if (user_string.compareTo(follower_string) < 0) {
+                context.write(user, follower);
+            }
+            else {
+                context.write(follower, user);
+            }
         }
     }
 
     public static class Reduce extends Reducer<Text, Text, Text, Text> {
-        Set<String> visited = new HashSet<>();
-
         @Override
         protected void reduce(Text user, Iterable<Text> neighbors, Context context) throws IOException, InterruptedException {
+            Set<String> visited = new HashSet<>();
+
             for (Text neighbor : neighbors) {
-                if (!visited.contains(neighbor.toString())) {
+                String neighbor_string = neighbor.toString();
+                if (!visited.contains(neighbor_string)) {
                     context.write(user, neighbor);
+                    visited.add(neighbor_string);
                 }
             }
-
-            visited.clear();
         }
     }
 }

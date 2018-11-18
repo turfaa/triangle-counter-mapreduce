@@ -40,32 +40,32 @@ public class PhaseOne {
     public static class Map extends Mapper<Text, Text, Text, Text> {
         @Override
         protected void map(Text user, Text follower, Context context) throws IOException, InterruptedException {
-            if (user.toString().compareTo(follower.toString()) < 0) {
-                context.write(user, follower);
-            }
+            context.write(user, follower);
         }
     }
 
     public static class Reduce extends Reducer<Text, Text, Text, Text> {
-        List<String> neighborList = new ArrayList<>();
         Text child = new Text();
 
         @Override
         protected void reduce(Text user, Iterable<Text> neighbors, Context context) throws IOException, InterruptedException {
-            for (Text neighbor : neighbors) {
-                neighborList.add(neighbor.toString());
-            }
+            List<String> neighbor_list = new ArrayList<>();
 
-            for (String u : neighborList) {
-                for (String v : neighborList) {
-                    if (u.compareTo(v) < 0) {
-                        child.set(u + ',' + v);
-                        context.write(user, child);
+            for (Text neighbor : neighbors) {
+                neighbor_list.add(neighbor.toString());
+            }
+            for (int u = 0; u < neighbor_list.size(); u++) {
+                for (int v = u+1; v < neighbor_list.size(); v++) {
+                    if (neighbor_list.get(u).compareTo(neighbor_list.get(v)) < 0) {
+                        child.set(neighbor_list.get(u) + ',' + neighbor_list.get(v));
                     }
+                    else {
+                        child.set(neighbor_list.get(v) + ',' + neighbor_list.get(u));
+                    }
+
+                    context.write(user, child);
                 }
             }
-
-            neighborList.clear();
         }
     }
 }
